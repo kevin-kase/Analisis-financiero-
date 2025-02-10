@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard Financiero</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+</head>
+<body class="bg-gray-100">
+    <div class="container mx-auto p-4">
+        <header class="bg-white shadow rounded-lg p-6 mb-6">
+            <h1 class="text-3xl font-bold text-gray-800">Análisis Financiero</h1>
+            <div class="mt-4">
+                <label class="mr-2">Símbolo:</label>
+                <input type="text" id="symbol" value="AAPL" class="border p-2 rounded">
+                <button onclick="updateData()" class="bg-blue-500 text-white px-4 py-2 rounded ml-2">
+                    Actualizar
+                </button>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-white p-6 rounded-lg shadow">
+                <h2 class="text-xl font-semibold mb-4">Precios Históricos</h2>
+                <canvas id="priceChart"></canvas>
+            </div>
+            
+            <div class="bg-white p-6 rounded-lg shadow">
+                <h2 class="text-xl font-semibold mb-4">Indicadores Técnicos</h2>
+                <canvas id="indicatorsChart"></canvas>
+            </div>
+
+            <div class="bg-white p-6 rounded-lg shadow">
+                <h2 class="text-xl font-semibold mb-4">Estadísticas</h2>
+                <div id="stats" class="grid grid-cols-2 gap-4">
+                    <div class="p-4 bg-gray-50 rounded">
+                        <h3 class="font-medium">Precio Actual</h3>
+                        <p id="currentPrice" class="text-2xl font-bold">-</p>
+                    </div>
+                    <div class="p-4 bg-gray-50 rounded">
+                        <h3 class="font-medium">Variación</h3>
+                        <p id="priceChange" class="text-2xl font-bold">-</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Datos de ejemplo
+        const generateMockData = () => {
+            const dates = [];
+            const prices = [];
+            const ma20 = [];
+            let currentPrice = 150;
+            
+            for (let i = 0; i < 100; i++) {
+                dates.push(moment().subtract(100 - i, 'days').format('YYYY-MM-DD'));
+                currentPrice += (Math.random() - 0.5) * 5;
+                prices.push(currentPrice);
+                
+                if (i >= 19) {
+                    const avg = prices.slice(i-19, i+1).reduce((a, b) => a + b) / 20;
+                    ma20.push(avg);
+                } else {
+                    ma20.push(null);
+                }
+            }
+            
+            return { dates, prices, ma20 };
+        };
+
+        // Crear gráficos
+        const createCharts = (data) => {
+            // Gráfico de precios
+            const priceCtx = document.getElementById('priceChart').getContext('2d');
+            new Chart(priceCtx, {
+                type: 'line',
+                data: {
+                    labels: data.dates,
+                    datasets: [{
+                        label: 'Precio',
+                        data: data.prices,
+                        borderColor: 'rgb(75, 192, 192)',
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    }
+                }
+            });
+
+            // Actualizar estadísticas
+            document.getElementById('currentPrice').textContent = 
+                `$${data.prices[data.prices.length-1].toFixed(2)}`;
+            const change = (data.prices[data.prices.length-1] - data.prices[data.prices.length-2]).toFixed(2);
+            document.getElementById('priceChange').textContent = 
+                `${change > 0 ? '+' : ''}${change}`;
+        };
+
+        // Inicializar
+        const mockData = generateMockData();
+        createCharts(mockData);
+
+        // Función de actualización
+        function updateData() {
+            const newData = generateMockData();
+            createCharts(newData);
+        }
+    </script>
+</body>
+</html>
